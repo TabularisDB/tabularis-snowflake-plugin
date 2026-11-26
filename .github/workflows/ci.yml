@@ -1,0 +1,94 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+    types: [opened, edited, reopened, synchronize]
+  schedule:
+    - cron: "17 6 * * 1"
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Build
+        run: cargo build
+
+      - name: Run tests
+        run: cargo test --locked
+
+      - name: Clippy
+        run: cargo clippy --all-targets -- -D warnings
+
+      - name: Check formatting
+        run: cargo fmt --all -- --check
+
+  vendored-postgres-version:
+    name: Check for new tokio-postgres releases
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Compare the vendored version with the latest stable release
+        shell: bash
+        run: |
+          vendored=$(python3 -c 'import tomllib; print(tomllib.load(open("vendor/tokio-postgres/Cargo.toml", "rb"))["package"]["version"])')
+          latest=$(curl --fail --silent --show-error --retry 3 https://index.crates.io/to/ki/tokio-postgres |
+            jq -r 'select(.yanked == false and (.vers | test("^[0-9]+[.][0-9]+[.][0-9]+$"))) | .vers' |
+            sort -V | tail -n 1)
+          if [[ "$latest" != "$vendored" ]]; then
+            echo "::error::Review the local tokio-postgres $vendored patch against upstream $latest."
+            exit 1
+          fi
+
+  validate-manifest:
+    name: Validate .tabularium manifest
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Validate against the live registry schema
+        run: npx --yes @tabularium/cli validate .tabularium --registry https://registry.tabularis.dev --kind driver
+
+  pr-title:
+    name: PR title (Conventional Commits)
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+    steps:
+      - uses: amannn/action-semantic-pull-request@v6
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  markdownlint:
+    name: Markdown lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Run markdownlint
+        run: npx --yes markdownlint-cli "**/*.md"
+
+  audit:
+    name: Security audit
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      checks: write
+      issues: write
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: rustsec/audit-check@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}

@@ -1,0 +1,49 @@
+{
+  "$schema": "https://registry.tabularis.dev/manifest.schema.json?kind=driver",
+  "id": "snowflake",
+  "name": "Snowflake",
+  "version": "0.1.0-alpha.1",
+  "description": "Development scaffold for the Snowflake database driver. Database connectivity and query execution are planned.",
+  "category": "database",
+  "tags": [
+    "driver",
+    "snowflake",
+    "sql"
+  ],
+  "license": "Apache-2.0",
+  "color": "#29B5E8",
+  "readme": "README.md",
+  "homepage": "https://github.com/TabularisDB/tabularis-snowflake-plugin",
+  "documentation_url": "https://github.com/TabularisDB/tabularis-snowflake-plugin#readme",
+  "min_runtime_version": "0.20.0",
+  "support": {
+    "issues_url": "https://github.com/TabularisDB/tabularis-snowflake-plugin/issues"
+  },
+  "kind": "driver",
+  "engine": "snowflake",
+  "paradigms": [
+    "relational"
+  ],
+  "default_port": 443,
+  "default_username": "",
+  "executable": "snowflake-plugin",
+  "capabilities": {
+    "schemas": false,
+    "views": false,
+    "routines": false,
+    "file_based": false,
+    "folder_based": false,
+    "connection_string": false,
+    "alter_primary_key": false,
+    "alter_column": false,
+    "create_foreign_keys": false,
+    "manage_tables": false,
+    "table_import": false,
+    "table_export": false,
+    "explain": false,
+    "readonly": true,
+    "sql_dialect": "generic",
+    "identifier_quote": "\""
+  },
+  "data_types": []
+}
